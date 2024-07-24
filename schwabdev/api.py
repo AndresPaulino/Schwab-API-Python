@@ -10,7 +10,11 @@ from datetime import datetime
 
 class Client:
 
-    def __init__(self, app_key, app_secret, callback_url="https://127.0.0.1", tokens_file="tokens.json", timeout=30, verbose=True, show_linked=True):
+    def __init__(self, app_key, app_secret, callback_url, tokens_file="tokens.json", timeout=30, verbose=True, show_linked=True):
+        if app_key is None or app_secret is None or callback_url is None or tokens_file is None:
+            raise Exception("app_key, app_secret, callback_url, and tokens_file cannot be None.")
+        elif len(app_key) != 32 or len(app_secret) != 16:
+            raise Exception("App key or app secret invalid length.")
         """
         Initialize a client to access the Schwab API.
         :param app_key: app key credentials

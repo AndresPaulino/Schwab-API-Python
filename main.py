@@ -50,11 +50,12 @@ def get_account_details():
     app_key = request.headers.get('App-Key')
     app_secret = request.headers.get('App-Secret')
     access_token = request.headers.get('Access-Token')
+    callback_url = request.headers.get('Callback-Url')
     
-    if not all([app_key, app_secret, access_token]):
+    if not all([app_key, app_secret, access_token, callback_url]):
         return jsonify({'error': 'Missing required headers'}), 400
     
-    client = Client(app_key, app_secret)
+    client = Client(app_key, app_secret, callback_url=callback_url)
     client.access_token = access_token
     details = client.account_details_all().json()
     return jsonify(details)
