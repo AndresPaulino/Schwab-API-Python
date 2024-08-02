@@ -9,12 +9,7 @@ from datetime import datetime
 
 
 class Client:
-
-    def __init__(self, app_key, app_secret, callback_url, tokens_file="tokens.json", timeout=30, verbose=True, show_linked=True):
-        if app_key is None or app_secret is None or callback_url is None or tokens_file is None:
-            raise Exception("app_key, app_secret, callback_url, and tokens_file cannot be None.")
-        elif len(app_key) != 32 or len(app_secret) != 16:
-            raise Exception("App key or app secret invalid length.")
+    def __init__(self, app_key, app_secret, callback_url, tokens_file="tokens.json", timeout=30, verbose=True, show_linked=True, skip_token_refresh=False):
         """
         Initialize a client to access the Schwab API.
         :param app_key: app key credentials
@@ -31,13 +26,9 @@ class Client:
         :type verbose: bool
         :param show_linked: print linked accounts
         :type show_linked: bool
+        :param skip_token_refresh: skip automatic token refresh on initialization
+        :type skip_token_refresh: bool
         """
-
-        if app_key is None or app_secret is None or callback_url is None or tokens_file is None:
-            raise Exception("app_key, app_secret, callback_url, and tokens_file cannot be None.")
-        elif len(app_key) != 32 or len(app_secret) != 16:
-            raise Exception("App key or app secret invalid length.")
-
         self._app_key = app_key
         self._app_secret = app_secret
         self._callback_url = callback_url
@@ -68,16 +59,18 @@ class Client:
                 color_print.info(self._refresh_token_issued.strftime(
                     "Refresh token last updated: %Y-%m-%d %H:%M:%S") + f" (expires in {self._refresh_token_timeout - (datetime.now() - self._refresh_token_issued).days} days)")
             # check if tokens need to be updated and update if needed
-            self.update_tokens()
+            if not skip_token_refresh:
+                self.update_tokens()
         else:
             # The tokens file doesn't exist, so create it.
             color_print.warning(f"Token file does not exist or invalid formatting, creating \"{str(tokens_file)}\"")
             open(self._tokens_file, 'w').close()
             # Tokens must be updated.
-            self._update_refresh_token()
+            if not skip_token_refresh:
+                self._update_refresh_token()
 
         # get account numbers & hashes, this doubles as a checker to make sure that the appKey and appSecret are valid and that the app is ready for use
-        if show_linked and self._verbose:
+        if show_linked and self._verbose and not skip_token_refresh:
             resp = self.account_linked()
             if resp.ok:
                 d = resp.json()
