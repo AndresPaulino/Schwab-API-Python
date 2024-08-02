@@ -1,8 +1,14 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from schwabdev.api import Client
 import os
+import logging
 
 app = Flask(__name__)
+CORS(app)
+
+# Set up logging
+app.logger.setLevel(logging.DEBUG)
 
 @app.route('/initialize', methods=['POST'])
 def initialize_client():
@@ -53,7 +59,7 @@ def exchange_code():
             return jsonify(tokens)
         else:
             app.logger.error(f"Failed to exchange code. Schwab API response: {response.text}")
-            return jsonify({'error': 'Failed to exchange code', 'details': response.text}), 400
+            return jsonify({'error': 'Failed to exchange code', 'details': response.text}), response.status_code
     except Exception as e:
         app.logger.exception("Error exchanging code")
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
