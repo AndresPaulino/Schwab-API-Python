@@ -20,11 +20,12 @@ def initialize_client():
 def generate_auth_url():
     app_key = request.json.get('app_key')
     callback_url = request.json.get('callback_url')
+    state = request.json.get('state')
     
-    if not all([app_key, callback_url]):
+    if not all([app_key, callback_url, state]):
         return jsonify({'error': 'Missing required parameters'}), 400
     
-    auth_url = f'https://api.schwabapi.com/v1/oauth/authorize?client_id={app_key}&redirect_uri={callback_url}'
+    auth_url = f'https://api.schwabapi.com/v1/oauth/authorize?client_id={app_key}&redirect_uri={callback_url}&state={state}'
     return jsonify({'authUrl': auth_url})
 
 @app.route('/exchange-code', methods=['POST'])
@@ -60,6 +61,10 @@ def get_account_details():
     details = client.account_details_all().json()
     return jsonify(details)
 
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "healthy"}), 200
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 6060))
     app.run(host='0.0.0.0', port=port)
