@@ -30,22 +30,33 @@ def generate_auth_url():
 
 @app.route('/exchange-code', methods=['POST'])
 def exchange_code():
+    app.logger.info("Received request to exchange code")
+    app.logger.debug(f"Request data: {request.json}")
+    
     app_key = request.json.get('app_key')
     app_secret = request.json.get('app_secret')
     callback_url = request.json.get('callback_url')
     code = request.json.get('code')
     
     if not all([app_key, app_secret, callback_url, code]):
+        app.logger.error("Missing required parameters")
         return jsonify({'error': 'Missing required parameters'}), 400
     
-    client = Client(app_key, app_secret, callback_url=callback_url)
-    response = client._post_oauth_token('authorization_code', code)
-    if response.ok:
-        tokens = response.json()
-        return jsonify(tokens)
-    else:
-        app.logger.error(f"Failed to exchange code. Response: {response.text}")
-        return jsonify({'error': 'Failed to exchange code', 'details': response.text}), 400
+    try:
+        client = Client(app_key, app_secret, callback_url=callback_url)
+        response = client._post_oauth_token('authorization_code', code)
+        app.logger.info(f"Schwab API response status: {response.status_code}")
+        app.logger.debug(f"Schwab API response: {response.text}")
+        
+        if response.ok:
+            tokens = response.json()
+            return jsonify(tokens)
+        else:
+            app.logger.error(f"Failed to exchange code. Schwab API response: {response.text}")
+            return jsonify({'error': 'Failed to exchange code', 'details': response.text}), 400
+    except Exception as e:
+        app.logger.exception("Error exchanging code")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 @app.route('/account-details', methods=['GET'])
 def get_account_details():
