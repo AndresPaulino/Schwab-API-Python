@@ -44,7 +44,8 @@ def exchange_code():
         tokens = response.json()
         return jsonify(tokens)
     else:
-        return jsonify({'error': 'Failed to exchange code'}), 400
+        app.logger.error(f"Failed to exchange code. Response: {response.text}")
+        return jsonify({'error': 'Failed to exchange code', 'details': response.text}), 400
 
 @app.route('/account-details', methods=['GET'])
 def get_account_details():
